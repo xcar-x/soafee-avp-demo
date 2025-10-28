@@ -30,17 +30,6 @@ ENV PYTHONUNBUFFERED=1
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN dpkg-reconfigure dash
 
-# Add per-host APT proxy for packages.ros.org
-RUN cat > /etc/apt/apt.conf.d/80proxy <<'EOF'
-Acquire::http::Proxy::packages.ros.org "http://10.200.101.22:9080";
-Acquire::https::Proxy::packages.ros.org "http://10.200.101.22:9080";
-Acquire::http::Proxy "DIRECT";
-Acquire::https::Proxy "DIRECT";
-EOF
-
-# Re-run update to ensure proxy applies
-RUN apt-get update -q
-
 # use a snapshot to ensure package updates don't break this image.
 ADD https://github.com/xronos-inc/apt-focal-snapshot/raw/refs/tags/v1.0.0/apt-snapshot.sh /usr/local/bin/apt-snapshot
 RUN chmod 0755 /usr/local/bin/apt-snapshot
@@ -101,6 +90,15 @@ RUN apt-get install -y -q \
 RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 RUN echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu focal main" \
     | tee /etc/apt/sources.list.d/ros2.list
+
+# Add per-host APT proxy for packages.ros.org
+RUN cat > /etc/apt/apt.conf.d/80proxy <<'EOF'
+Acquire::http::Proxy::packages.ros.org "http://10.200.101.22:9080";
+Acquire::https::Proxy::packages.ros.org "http://10.200.101.22:9080";
+Acquire::http::Proxy "DIRECT";
+Acquire::https::Proxy "DIRECT";
+EOF
+
 RUN apt-get update -q
 
 # ROS depends on an upgraded version of libssl1.1, but 1.1.1f-1ubuntu2.24 breaks
