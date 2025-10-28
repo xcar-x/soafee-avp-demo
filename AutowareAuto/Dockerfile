@@ -98,7 +98,7 @@ RUN apt-get install -y -q \
 
 # add ros distro to apt
 # tag: foxy/2023-06-20
-RUN curl -sSL https://github.com/ros/rosdistro/raw/refs/tags/foxy/2023-06-20/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
 RUN echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu focal main" \
     | tee /etc/apt/sources.list.d/ros2.list
 RUN apt-get update -q
