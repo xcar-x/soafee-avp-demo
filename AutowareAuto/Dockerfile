@@ -30,6 +30,17 @@ ENV PYTHONUNBUFFERED=1
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN dpkg-reconfigure dash
 
+# Add per-host APT proxy for packages.ros.org
+RUN cat > /etc/apt/apt.conf.d/80proxy <<'EOF'
+Acquire::http::Proxy::packages.ros.org "http://10.200.101.22:9080";
+Acquire::https::Proxy::packages.ros.org "http://10.200.101.22:9080";
+Acquire::http::Proxy "DIRECT";
+Acquire::https::Proxy "DIRECT";
+EOF
+
+# Re-run update to ensure proxy applies
+RUN apt-get update -q
+
 # use a snapshot to ensure package updates don't break this image.
 ADD https://github.com/xronos-inc/apt-focal-snapshot/raw/refs/tags/v1.0.0/apt-snapshot.sh /usr/local/bin/apt-snapshot
 RUN chmod 0755 /usr/local/bin/apt-snapshot
