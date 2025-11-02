@@ -1,0 +1,271 @@
+services:
+    federate__lanelet2_visualizer:
+        build:
+            context: "federate__lanelet2_visualizer"
+        container_name: "Autoware-federate__lanelet2_visualizer"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__filter_and_transform__0:
+        build:
+            context: "federate__filter_and_transform__0"
+        container_name: "Autoware-federate__filter_and_transform__0"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__filter_and_transform__1:
+        build:
+            context: "federate__filter_and_transform__1"
+        container_name: "Autoware-federate__filter_and_transform__1"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__point_cloud_fusion:
+        build:
+            context: "federate__point_cloud_fusion"
+        container_name: "Autoware-federate__point_cloud_fusion"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__voxel_grid_downsampler:
+        build:
+            context: "federate__voxel_grid_downsampler"
+        container_name: "Autoware-federate__voxel_grid_downsampler"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__ray_ground_classifier:
+        build:
+            context: "federate__ray_ground_classifier"
+        container_name: "Autoware-federate__ray_ground_classifier"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__euclidean_cluster_detector:
+        build:
+            context: "federate__euclidean_cluster_detector"
+        container_name: "Autoware-federate__euclidean_cluster_detector"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__ndt_map_publisher:
+        build:
+            context: "federate__ndt_map_publisher"
+        container_name: "Autoware-federate__ndt_map_publisher"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__p2d_ndt_localizer:
+        build:
+            context: "federate__p2d_ndt_localizer"
+        container_name: "Autoware-federate__p2d_ndt_localizer"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__off_map_obstacles_filter:
+        build:
+            context: "federate__off_map_obstacles_filter"
+        container_name: "Autoware-federate__off_map_obstacles_filter"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__behavior_planner:
+        build:
+            context: "federate__behavior_planner"
+        container_name: "Autoware-federate__behavior_planner"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__parking_planner:
+        build:
+            context: "federate__parking_planner"
+        container_name: "Autoware-federate__parking_planner"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__lane_planner:
+        build:
+            context: "federate__lane_planner"
+        container_name: "Autoware-federate__lane_planner"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__global_planner:
+        build:
+            context: "federate__global_planner"
+        container_name: "Autoware-federate__global_planner"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__object_collision_estimator:
+        build:
+            context: "federate__object_collision_estimator"
+        container_name: "Autoware-federate__object_collision_estimator"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__lgsvl_interface:
+        build:
+            context: "federate__lgsvl_interface"
+        container_name: "Autoware-federate__lgsvl_interface"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__mpc_controller:
+        build:
+            context: "federate__mpc_controller"
+        container_name: "Autoware-federate__mpc_controller"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__robot_state_publisher:
+        build:
+            context: "federate__robot_state_publisher"
+        container_name: "Autoware-federate__robot_state_publisher"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__map_provider:
+        build:
+            context: "federate__map_provider"
+        container_name: "Autoware-federate__map_provider"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    federate__rviz2:
+        build:
+            context: "federate__rviz2"
+        container_name: "Autoware-federate__rviz2"
+        tty: true
+        extra_hosts:
+          - "host.docker.internal:host-gateway"
+        environment:
+          - "LF_TELEGRAF_HOST_NAME=${LF_TELEGRAF_HOST_NAME:-host.docker.internal}"
+        env_file: "env_file"
+        depends_on:
+            - rti
+
+    rti:
+        image: "xronosinc/rti:v0.9.0"
+        hostname: "rti"
+        command: "-i 1  -t  -n 20"
+        container_name: "Autoware-rti"
+
+
+networks:
+    default:
+        name: "lf"

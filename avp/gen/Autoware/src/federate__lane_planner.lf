@@ -1,0 +1,203 @@
+target CCpp {
+  build-type: "Release",
+  cmake-include: [
+      "../../../src/lane_planner/include/CMakeListsExtension.txt",
+      "include/federate__lane_planner_extension.cmake"],
+  compile-definitions: {
+    FEDERATED_DECENTRALIZED: "",
+    EXECUTABLE_PREAMBLE: "",
+    _LF_CLOCK_SYNC_PERIOD_NS: "5000000",
+    NUMBER_OF_FEDERATES: "20",
+    FEDERATE_ID: "12",
+    _LF_CLOCK_SYNC_ATTENUATION: "10",
+    _LF_CLOCK_SYNC_COLLECT_STATS: "",
+    FEDERATED: "",
+    LF_CLOCK_SYNC: "2",
+    _LF_CLOCK_SYNC_INITIAL: "",
+    _LF_FEDERATE_NAMES_COMMA_SEPARATED: "\"federate__lanelet2_visualizer,federate__filter_and_transform__0,federate__filter_and_transform__1,federate__point_cloud_fusion,federate__voxel_grid_downsampler,federate__ray_ground_classifier,federate__euclidean_cluster_detector,federate__ndt_map_publisher,federate__p2d_ndt_localizer,federate__off_map_obstacles_filter,federate__behavior_planner,federate__parking_planner,federate__lane_planner,federate__global_planner,federate__object_collision_estimator,federate__lgsvl_interface,federate__mpc_controller,federate__robot_state_publisher,federate__map_provider,federate__rviz2\"",
+    _LF_CLOCK_SYNC_EXCHANGES_PER_INTERVAL: "10"
+  },
+  coordination: "decentralized",
+  docker: {
+    no-build: true,
+    builder-base: "openadkit",
+    env-file: "env_file",
+    runner-base: "",
+    rti-image: "xronosinc/rti:v0.9.0",
+    pre-build-script: "container-environment.sh",
+    pre-run-script: "container-environment.sh",
+    post-build-script: "",
+    docker-compose-override: ""
+  },
+  _fed_setup: "include/_federate__lane_planner_preamble.h",
+  files: [
+      "../../../Autoware-support",
+      "../../../config",
+      "../../../cyclonedds.xml",
+      "../../../src/include/constants.hpp",
+      "../../../src/include/utils.hpp"],
+  keepalive: true,
+  single-threaded: false,
+  trace-plugin: "telegraf_lf_trace_plugin",
+  tracing: true
+}
+import lane_planner from "../../../src/lane_planner/lane_planner_main.lf"
+
+NONE preamble {=
+#include "lanelet2_core/LaneletMap.h"
+#include "had_map_utils/had_map_conversion.hpp"
+#include "had_map_utils/had_map_query.hpp"
+#include "motion_common/motion_common.hpp"
+#include "lane_planner_nodes/lane_planner_node.hpp"
+#include "utils.hpp"
+#include "constants.hpp"
+=}
+preamble {=
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "core/federated/federate.h"
+#include "core/federated/network/net_common.h"
+#include "core/federated/network/net_util.h"
+#include "core/federated/clock-sync.h"
+#include "core/threaded/reactor_threaded.h"
+#include "core/utils/util.h"
+extern federate_instance_t _fed;
+#ifdef __cplusplus
+}
+#endif
+#include "rcutils/allocator.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+
+=}
+
+reactor _lane_plannerroute {
+  input port0: std::shared_ptr<autoware_auto_msgs::msg::Route>
+
+  output[1] port: std::shared_ptr<autoware_auto_msgs::msg::Route>
+
+  port0 -> port
+}
+reactor _lane_plannermap {
+  input port0: std::shared_ptr<autoware_auto_msgs::msg::HADMapBin>
+
+  output[1] port: std::shared_ptr<autoware_auto_msgs::msg::HADMapBin>
+
+  port0 -> port
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_13 {
+  output msg: std::shared_ptr<autoware_auto_msgs::msg::Route>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = autoware_auto_msgs::msg::Route;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<autoware_auto_msgs::msg::Route>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_networkReactor("sender")
+reactor NetworkSender_0<SENDERINDEXPARAMETER> {
+  input[1] msg: std::shared_ptr<autoware_auto_msgs::msg::Trajectory>
+
+  reaction(msg) {=
+    // Sending from msg[0] in federate federate__lane_planner to behavior_planner.lane_trajectory in federate federate__behavior_planner
+    if (!msg[0]->is_present) {
+    return;
+    }
+    rclcpp::SerializedMessage serialized_message(0u);
+    using MessageT = autoware_auto_msgs::msg::Trajectory;
+    static rclcpp::Serialization<MessageT> _lf_serializer;
+    _lf_serializer.serialize_message(msg[0]->value.get() , &serialized_message);
+    size_t _lf_message_length = serialized_message.size();
+    lf_send_message(MSG_TYPE_P2P_MESSAGE, 1, 10, "federate 10", _lf_message_length, serialized_message.get_rcl_serialized_message().buffer);
+  =}
+}
+@_networkReactor("sender")
+reactor NetworkSender_1<SENDERINDEXPARAMETER> {
+  input[1] msg: std::shared_ptr<autoware_auto_msgs::srv::HADMapService_Request>
+
+  reaction(msg) {=
+    // Sending from msg[0] in federate federate__lane_planner to map_provider.request in federate federate__map_provider
+    if (!msg[0]->is_present) {
+    return;
+    }
+    rclcpp::SerializedMessage serialized_message(0u);
+    using MessageT = autoware_auto_msgs::srv::HADMapService_Request;
+    static rclcpp::Serialization<MessageT> _lf_serializer;
+    _lf_serializer.serialize_message(msg[0]->value.get() , &serialized_message);
+    size_t _lf_message_length = serialized_message.size();
+    lf_send_message(MSG_TYPE_P2P_MESSAGE, 4, 18, "federate 18", _lf_message_length, serialized_message.get_rcl_serialized_message().buffer);
+  =}
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_34 {
+  output msg: std::shared_ptr<autoware_auto_msgs::msg::HADMapBin>
+
+  physical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = autoware_auto_msgs::msg::HADMapBin;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<autoware_auto_msgs::msg::HADMapBin>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_fed_config()
+main reactor  {
+
+    lane_planner = new lane_planner()
+    
+    
+    
+    
+    
+    ns_federate__behavior_planner_0 = new NetworkSender_0<{= 0 =}>()
+    ns_federate__map_provider_3 = new NetworkSender_1<{= 1 =}>()
+    @_tpoLevel(6)
+    nr_federate__lane_planner = new NetworkReceiver_13()
+    nr_federate__lane_planner_0 = new NetworkReceiver_34()
+    _lane_plannerroute0 = new _lane_plannerroute()
+    _lane_plannermap0 = new _lane_plannermap()
+    _lane_plannerroute0.port -> lane_planner.route
+    _lane_plannermap0.port -> lane_planner.map
+    nr_federate__lane_planner.msg -> _lane_plannerroute0.port0
+    lane_planner.trajectory -> ns_federate__behavior_planner_0.msg
+    lane_planner.request -> ns_federate__map_provider_3.msg
+    nr_federate__lane_planner_0.msg -> _lane_plannermap0.port0
+}

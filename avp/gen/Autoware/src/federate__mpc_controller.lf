@@ -1,0 +1,184 @@
+target CCpp {
+  build-type: "Release",
+  cmake-include: [
+      "../../../src/mpc_controller/include/CMakeListsExtension.txt",
+      "include/federate__mpc_controller_extension.cmake"],
+  compile-definitions: {
+    FEDERATED_DECENTRALIZED: "",
+    EXECUTABLE_PREAMBLE: "",
+    _LF_CLOCK_SYNC_PERIOD_NS: "5000000",
+    NUMBER_OF_FEDERATES: "20",
+    FEDERATE_ID: "16",
+    _LF_CLOCK_SYNC_ATTENUATION: "10",
+    _LF_CLOCK_SYNC_COLLECT_STATS: "",
+    FEDERATED: "",
+    LF_CLOCK_SYNC: "2",
+    _LF_CLOCK_SYNC_INITIAL: "",
+    _LF_FEDERATE_NAMES_COMMA_SEPARATED: "\"federate__lanelet2_visualizer,federate__filter_and_transform__0,federate__filter_and_transform__1,federate__point_cloud_fusion,federate__voxel_grid_downsampler,federate__ray_ground_classifier,federate__euclidean_cluster_detector,federate__ndt_map_publisher,federate__p2d_ndt_localizer,federate__off_map_obstacles_filter,federate__behavior_planner,federate__parking_planner,federate__lane_planner,federate__global_planner,federate__object_collision_estimator,federate__lgsvl_interface,federate__mpc_controller,federate__robot_state_publisher,federate__map_provider,federate__rviz2\"",
+    _LF_CLOCK_SYNC_EXCHANGES_PER_INTERVAL: "10"
+  },
+  coordination: "decentralized",
+  docker: {
+    no-build: true,
+    builder-base: "openadkit",
+    env-file: "env_file",
+    runner-base: "",
+    rti-image: "xronosinc/rti:v0.9.0",
+    pre-build-script: "container-environment.sh",
+    pre-run-script: "container-environment.sh",
+    post-build-script: "",
+    docker-compose-override: ""
+  },
+  _fed_setup: "include/_federate__mpc_controller_preamble.h",
+  files: [
+      "../../../Autoware-support",
+      "../../../config",
+      "../../../cyclonedds.xml",
+      "../../../src/include/constants.hpp",
+      "../../../src/include/utils.hpp",
+      "../../../src/mpc_controller/websocket_server_sync.hpp"],
+  keepalive: true,
+  single-threaded: false,
+  trace-plugin: "telegraf_lf_trace_plugin",
+  tracing: true
+}
+import mpc_controller from "../../../src/mpc_controller/mpc_controller_main.lf"
+
+NONE preamble {=
+#include "mpc_controller_nodes/mpc_controller_node.hpp" /* This is AUTOWARE node */
+    #include "controller_common/controller_base.hpp" /* This is AUTOWARE node */
+    #include "utils.hpp"
+    #include "constants.hpp"
+    #include "websocket_server_sync.hpp"
+=}
+preamble {=
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "core/federated/federate.h"
+#include "core/federated/network/net_common.h"
+#include "core/federated/network/net_util.h"
+#include "core/federated/clock-sync.h"
+#include "core/threaded/reactor_threaded.h"
+#include "core/utils/util.h"
+extern federate_instance_t _fed;
+#ifdef __cplusplus
+}
+#endif
+#include "rcutils/allocator.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+
+=}
+
+reactor _mpc_controllertrajectory {
+  input port0: std::shared_ptr<autoware_auto_msgs::msg::Trajectory>
+
+  output[1] port: std::shared_ptr<autoware_auto_msgs::msg::Trajectory>
+
+  port0 -> port
+}
+reactor _mpc_controllervehicle_kinematic_state {
+  input port0: std::shared_ptr<autoware_auto_msgs::msg::VehicleKinematicState>
+
+  output[1] port: std::shared_ptr<autoware_auto_msgs::msg::VehicleKinematicState>
+
+  port0 -> port
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_16 {
+  output msg: std::shared_ptr<autoware_auto_msgs::msg::Trajectory>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = autoware_auto_msgs::msg::Trajectory;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<autoware_auto_msgs::msg::Trajectory>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_24 {
+  output msg: std::shared_ptr<autoware_auto_msgs::msg::VehicleKinematicState>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = autoware_auto_msgs::msg::VehicleKinematicState;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<autoware_auto_msgs::msg::VehicleKinematicState>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_networkReactor("sender")
+reactor NetworkSender_0<SENDERINDEXPARAMETER> {
+  input[1] msg: std::shared_ptr<autoware_auto_msgs::msg::VehicleControlCommand>
+
+  reaction(msg) {=
+    // Sending from msg[0] in federate federate__mpc_controller to lgsvl_interface.vehicle_command in federate federate__lgsvl_interface
+    if (!msg[0]->is_present) {
+    return;
+    }
+    rclcpp::SerializedMessage serialized_message(0u);
+    using MessageT = autoware_auto_msgs::msg::VehicleControlCommand;
+    static rclcpp::Serialization<MessageT> _lf_serializer;
+    _lf_serializer.serialize_message(msg[0]->value.get() , &serialized_message);
+    size_t _lf_message_length = serialized_message.size();
+    lf_send_tagged_message(self->base.environment, 24000000, MSG_TYPE_P2P_TAGGED_MESSAGE, 1, 15, "federate 15", _lf_message_length, serialized_message.get_rcl_serialized_message().buffer);
+  =}
+}
+@_fed_config()
+main reactor  {
+
+    mpc_controller = new mpc_controller()
+    
+    
+    
+    
+    
+    ns_federate__lgsvl_interface_0 = new NetworkSender_0<{= 0 =}>()
+    @_tpoLevel(14)
+    nr_federate__mpc_controller = new NetworkReceiver_16()
+    nr_federate__mpc_controller_0 = new NetworkReceiver_24()
+    _mpc_controllertrajectory0 = new _mpc_controllertrajectory()
+    _mpc_controllervehicle_kinematic_state0 = new _mpc_controllervehicle_kinematic_state()
+    _mpc_controllertrajectory0.port -> mpc_controller.trajectory
+    _mpc_controllervehicle_kinematic_state0.port -> mpc_controller.vehicle_kinematic_state
+    nr_federate__mpc_controller.msg -> _mpc_controllertrajectory0.port0
+    nr_federate__mpc_controller_0.msg -> _mpc_controllervehicle_kinematic_state0.port0
+    mpc_controller.command -> ns_federate__lgsvl_interface_0.msg
+}

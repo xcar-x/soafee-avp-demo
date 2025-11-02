@@ -1,0 +1,13 @@
+extern "C" {
+#include "include/api/schedule.h"
+#include "low_level_platform/api/low_level_platform.h"
+}
+#include "include/federate__behavior_planner/federate__behavior_planner.h"
+#include "_federate__behavior_planner_main.h"
+// ***** Start of method declarations.
+// ***** End of method declarations.
+_federate__behavior_planner_main_main_self_t* new__federate__behavior_planner_main() {
+    _federate__behavior_planner_main_main_self_t* self = (_federate__behavior_planner_main_main_self_t*)lf_new_reactor(sizeof(_federate__behavior_planner_main_main_self_t));
+
+    return self;
+}

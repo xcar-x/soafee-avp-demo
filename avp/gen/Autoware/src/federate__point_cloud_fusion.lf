@@ -1,0 +1,197 @@
+target CCpp {
+  build-type: "Release",
+  cmake-include: [
+      "../../../src/point_cloud_fusion/include/CMakeListsExtension.txt",
+      "include/federate__point_cloud_fusion_extension.cmake"],
+  compile-definitions: {
+    FEDERATED_DECENTRALIZED: "",
+    EXECUTABLE_PREAMBLE: "",
+    _LF_CLOCK_SYNC_PERIOD_NS: "5000000",
+    NUMBER_OF_FEDERATES: "20",
+    FEDERATE_ID: "3",
+    _LF_CLOCK_SYNC_ATTENUATION: "10",
+    _LF_CLOCK_SYNC_COLLECT_STATS: "",
+    FEDERATED: "",
+    LF_CLOCK_SYNC: "2",
+    _LF_CLOCK_SYNC_INITIAL: "",
+    _LF_FEDERATE_NAMES_COMMA_SEPARATED: "\"federate__lanelet2_visualizer,federate__filter_and_transform__0,federate__filter_and_transform__1,federate__point_cloud_fusion,federate__voxel_grid_downsampler,federate__ray_ground_classifier,federate__euclidean_cluster_detector,federate__ndt_map_publisher,federate__p2d_ndt_localizer,federate__off_map_obstacles_filter,federate__behavior_planner,federate__parking_planner,federate__lane_planner,federate__global_planner,federate__object_collision_estimator,federate__lgsvl_interface,federate__mpc_controller,federate__robot_state_publisher,federate__map_provider,federate__rviz2\"",
+    _LF_CLOCK_SYNC_EXCHANGES_PER_INTERVAL: "10"
+  },
+  coordination: "decentralized",
+  docker: {
+    no-build: true,
+    builder-base: "openadkit",
+    env-file: "env_file",
+    runner-base: "",
+    rti-image: "xronosinc/rti:v0.9.0",
+    pre-build-script: "container-environment.sh",
+    pre-run-script: "container-environment.sh",
+    post-build-script: "",
+    docker-compose-override: ""
+  },
+  _fed_setup: "include/_federate__point_cloud_fusion_preamble.h",
+  files: [
+      "../../../Autoware-support",
+      "../../../config",
+      "../../../cyclonedds.xml",
+      "../../../src/include/constants.hpp",
+      "../../../src/include/utils.hpp"],
+  keepalive: true,
+  single-threaded: false,
+  trace-plugin: "telegraf_lf_trace_plugin",
+  tracing: true
+}
+import point_cloud_fusion from "../../../src/point_cloud_fusion/point_cloud_fusion_main.lf"
+
+NONE preamble {=
+#include "sensor_msgs/msg/point_cloud2.hpp"
+#include "point_cloud_fusion_node.hpp"
+#include "utils.hpp"
+#include "constants.hpp"
+=}
+preamble {=
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "core/federated/federate.h"
+#include "core/federated/network/net_common.h"
+#include "core/federated/network/net_util.h"
+#include "core/federated/clock-sync.h"
+#include "core/threaded/reactor_threaded.h"
+#include "core/utils/util.h"
+extern federate_instance_t _fed;
+#ifdef __cplusplus
+}
+#endif
+#include "rcutils/allocator.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+
+=}
+
+reactor _point_cloud_fusionpoints_in {
+  input port0: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  input port1: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  output[2] port: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  port0, port1 -> port
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_1 {
+  output msg: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = sensor_msgs::msg::PointCloud2;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_2 {
+  output msg: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = sensor_msgs::msg::PointCloud2;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_networkReactor("sender")
+reactor NetworkSender_0<SENDERINDEXPARAMETER> {
+  input[1] msg: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  reaction(msg) {=
+    // Sending from msg[0] in federate federate__point_cloud_fusion to voxel_grid_downsampler.points_in in federate federate__voxel_grid_downsampler
+    if (!msg[0]->is_present) {
+    return;
+    }
+    rclcpp::SerializedMessage serialized_message(0u);
+    using MessageT = sensor_msgs::msg::PointCloud2;
+    static rclcpp::Serialization<MessageT> _lf_serializer;
+    _lf_serializer.serialize_message(msg[0]->value.get() , &serialized_message);
+    size_t _lf_message_length = serialized_message.size();
+    lf_send_tagged_message(self->base.environment, NEVER, MSG_TYPE_P2P_TAGGED_MESSAGE, 0, 4, "federate 4", _lf_message_length, serialized_message.get_rcl_serialized_message().buffer);
+  =}
+}
+@_networkReactor("sender")
+reactor NetworkSender_1<SENDERINDEXPARAMETER> {
+  input[1] msg: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  reaction(msg) {=
+    // Sending from msg[0] in federate federate__point_cloud_fusion to ray_ground_classifier.points_in in federate federate__ray_ground_classifier
+    if (!msg[0]->is_present) {
+    return;
+    }
+    rclcpp::SerializedMessage serialized_message(0u);
+    using MessageT = sensor_msgs::msg::PointCloud2;
+    static rclcpp::Serialization<MessageT> _lf_serializer;
+    _lf_serializer.serialize_message(msg[0]->value.get() , &serialized_message);
+    size_t _lf_message_length = serialized_message.size();
+    lf_send_tagged_message(self->base.environment, NEVER, MSG_TYPE_P2P_TAGGED_MESSAGE, 0, 5, "federate 5", _lf_message_length, serialized_message.get_rcl_serialized_message().buffer);
+  =}
+}
+@_fed_config()
+main reactor  {
+
+    point_cloud_fusion = new point_cloud_fusion(in_width=2)
+    
+    
+    
+    
+    
+    @_tpoLevel(5)
+    ns_federate__voxel_grid_downsampler = new NetworkSender_0<{= 0 =}>()
+    @_tpoLevel(5)
+    ns_federate__ray_ground_classifier = new NetworkSender_1<{= 1 =}>()
+    @_tpoLevel(4)
+    nr_federate__point_cloud_fusion = new NetworkReceiver_1()
+    @_tpoLevel(4)
+    nr_federate__point_cloud_fusion_0 = new NetworkReceiver_2()
+    _point_cloud_fusionpoints_in0 = new _point_cloud_fusionpoints_in()
+    _point_cloud_fusionpoints_in0.port -> point_cloud_fusion.points_in
+    nr_federate__point_cloud_fusion.msg -> _point_cloud_fusionpoints_in0.port0
+    nr_federate__point_cloud_fusion_0.msg -> _point_cloud_fusionpoints_in0.port1
+    point_cloud_fusion.points_out -> ns_federate__voxel_grid_downsampler.msg
+    point_cloud_fusion.points_out -> ns_federate__ray_ground_classifier.msg
+}

@@ -1,0 +1,163 @@
+target CCpp {
+  build-type: "Release",
+  cmake-include: [
+      "../../../src/p2d_ndt_localizer/include/CMakeListsExtension.txt",
+      "include/federate__p2d_ndt_localizer_extension.cmake"],
+  compile-definitions: {
+    FEDERATED_DECENTRALIZED: "",
+    EXECUTABLE_PREAMBLE: "",
+    _LF_CLOCK_SYNC_PERIOD_NS: "5000000",
+    NUMBER_OF_FEDERATES: "20",
+    FEDERATE_ID: "8",
+    _LF_CLOCK_SYNC_ATTENUATION: "10",
+    _LF_CLOCK_SYNC_COLLECT_STATS: "",
+    FEDERATED: "",
+    LF_CLOCK_SYNC: "2",
+    _LF_CLOCK_SYNC_INITIAL: "",
+    _LF_FEDERATE_NAMES_COMMA_SEPARATED: "\"federate__lanelet2_visualizer,federate__filter_and_transform__0,federate__filter_and_transform__1,federate__point_cloud_fusion,federate__voxel_grid_downsampler,federate__ray_ground_classifier,federate__euclidean_cluster_detector,federate__ndt_map_publisher,federate__p2d_ndt_localizer,federate__off_map_obstacles_filter,federate__behavior_planner,federate__parking_planner,federate__lane_planner,federate__global_planner,federate__object_collision_estimator,federate__lgsvl_interface,federate__mpc_controller,federate__robot_state_publisher,federate__map_provider,federate__rviz2\"",
+    _LF_CLOCK_SYNC_EXCHANGES_PER_INTERVAL: "10"
+  },
+  coordination: "decentralized",
+  docker: {
+    no-build: true,
+    builder-base: "openadkit",
+    env-file: "env_file",
+    runner-base: "",
+    rti-image: "xronosinc/rti:v0.9.0",
+    pre-build-script: "container-environment.sh",
+    pre-run-script: "container-environment.sh",
+    post-build-script: "",
+    docker-compose-override: ""
+  },
+  _fed_setup: "include/_federate__p2d_ndt_localizer_preamble.h",
+  files: [
+      "../../../Autoware-support",
+      "../../../config",
+      "../../../cyclonedds.xml",
+      "../../../src/include/constants.hpp",
+      "../../../src/include/utils.hpp"],
+  keepalive: true,
+  single-threaded: false,
+  trace-plugin: "telegraf_lf_trace_plugin",
+  tracing: true
+}
+import p2d_ndt_localizer from "../../../src/p2d_ndt_localizer/p2d_ndt_localizer_main.lf"
+
+NONE preamble {=
+#include "ndt_localizer_nodes.hpp"
+#include "utils.hpp"
+#include "constants.hpp"
+=}
+preamble {=
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "core/federated/federate.h"
+#include "core/federated/network/net_common.h"
+#include "core/federated/network/net_util.h"
+#include "core/federated/clock-sync.h"
+#include "core/threaded/reactor_threaded.h"
+#include "core/utils/util.h"
+extern federate_instance_t _fed;
+#ifdef __cplusplus
+}
+#endif
+#include "rcutils/allocator.h"
+#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/serialization.hpp"
+#include "rclcpp/serialized_message.hpp"
+
+=}
+
+reactor _p2d_ndt_localizerndt_map_points_in {
+  input port0: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  output[1] port: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  port0 -> port
+}
+reactor _p2d_ndt_localizerfused_downsampled_points_in {
+  input port0: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  output[1] port: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  port0 -> port
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_5 {
+  output msg: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = sensor_msgs::msg::PointCloud2;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_networkReactor("receiver")
+reactor NetworkReceiver_8 {
+  output msg: std::shared_ptr<sensor_msgs::msg::PointCloud2>
+
+  logical action networkMessage: uint8_t*
+
+  reaction(startup) {=
+    self->_lf__reaction_1.is_an_input_reaction = true;
+  =}
+
+  reaction(networkMessage) -> msg {=
+    msg->physical_time_of_arrival = self->_lf__networkMessage.physical_time_of_arrival;
+    msg->intended_tag = self->_lf__networkMessage.intended_tag;
+    auto _lf_message = std::make_unique<rcl_serialized_message_t>( rcl_serialized_message_t{
+        .buffer = (uint8_t*)self->_lf__networkMessage.tmplt.token->value,
+        .buffer_length = self->_lf__networkMessage.tmplt.token->length,
+        .buffer_capacity = self->_lf__networkMessage.tmplt.token->length,
+        .allocator = rcl_get_default_allocator()
+    });
+    auto _lf_msg = std::make_unique<rclcpp::SerializedMessage>(std::move(*_lf_message.get()));
+    self->_lf__networkMessage.tmplt.token->value = NULL; // Manually move the data
+    using MessageT = sensor_msgs::msg::PointCloud2;
+    MessageT deserialized_message = MessageT();
+    auto _lf_serializer = rclcpp::Serialization<MessageT>();
+    _lf_serializer.deserialize_message(_lf_msg.get(), &deserialized_message);
+    auto msg_shared_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>(deserialized_message);
+    lf_set(msg, msg_shared_ptr);
+  =}
+}
+@_fed_config()
+main reactor  {
+
+    p2d_ndt_localizer = new p2d_ndt_localizer()
+    
+    
+    
+    
+    
+    
+    @_tpoLevel(10)
+    nr_federate__p2d_ndt_localizer = new NetworkReceiver_5()
+    nr_federate__p2d_ndt_localizer_0 = new NetworkReceiver_8()
+    _p2d_ndt_localizerndt_map_points_in0 = new _p2d_ndt_localizerndt_map_points_in()
+    _p2d_ndt_localizerfused_downsampled_points_in0 = new _p2d_ndt_localizerfused_downsampled_points_in()
+    _p2d_ndt_localizerndt_map_points_in0.port -> p2d_ndt_localizer.ndt_map_points_in
+    _p2d_ndt_localizerfused_downsampled_points_in0.port -> p2d_ndt_localizer.fused_downsampled_points_in
+    nr_federate__p2d_ndt_localizer.msg -> _p2d_ndt_localizerfused_downsampled_points_in0.port0
+    nr_federate__p2d_ndt_localizer_0.msg -> _p2d_ndt_localizerndt_map_points_in0.port0
+}
