@@ -34,6 +34,8 @@ RUN dpkg-reconfigure dash
 RUN cat > /etc/apt/apt.conf.d/80proxy <<'EOF'
 Acquire::http::Proxy::packages.ros.org "http://10.200.101.22:9080";
 Acquire::https::Proxy::packages.ros.org "http://10.200.101.22:9080";
+Acquire::http::Proxy::snapshot.ubuntu.com "http://10.200.101.22:9080";
+Acquire::https::Proxy::snapshot.ubuntu.com "http://10.200.101.22:9080";
 Acquire::http::Proxy "DIRECT";
 Acquire::https::Proxy "DIRECT";
 EOF
